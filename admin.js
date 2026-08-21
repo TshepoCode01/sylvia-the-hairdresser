@@ -1,204 +1,93 @@
 /* =========================================================
    SYLVIA THE HAIRDRESSER
-   ADMIN DASHBOARD JAVASCRIPT
-========================================================= */
-
-
-/* =========================================================
-   SUPABASE
-========================================================= */
-
-/*
-   IMPORTANT:
-   This file uses the supabaseClient from supabase.js.
-
-   Your admin.html loads:
-   1. Supabase library
-   2. supabase.js
-   3. admin.js
-
-   So supabaseClient should already exist.
-*/
-
-
-/* =========================================================
-   SETTINGS
+   SIMPLE ADMIN DASHBOARD
 ========================================================= */
 
 const GALLERY_BUCKET = "gallery";
 
 
-/* =========================================================
-   PAGE START
-========================================================= */
-
-document.addEventListener("DOMContentLoaded", function () {
-
-    console.log("SYLVIA Admin JavaScript loaded.");
-
+document.addEventListener("DOMContentLoaded", () => {
     setupAdmin();
-
 });
 
 
 /* =========================================================
-   SETUP ADMIN
+   START ADMIN
 ========================================================= */
 
 async function setupAdmin() {
 
-    try {
+    const user = await checkAdmin();
 
-        /* Check logged-in administrator */
-
-        const user = await checkAdmin();
-
-        if (!user) {
-            return;
-        }
-
-
-        /* Logout */
-
-        const logoutButton =
-            document.getElementById("logout-btn");
-
-        if (logoutButton) {
-
-            logoutButton.addEventListener(
-                "click",
-                adminLogout
-            );
-
-        }
-
-
-        /* Service form */
-
-        const serviceForm =
-            document.getElementById("service-form");
-
-        if (serviceForm) {
-
-            serviceForm.addEventListener(
-                "submit",
-                addService
-            );
-
-        }
-
-
-        /* Gallery form */
-
-        const galleryForm =
-            document.getElementById("gallery-form");
-
-        if (galleryForm) {
-
-            galleryForm.addEventListener(
-                "submit",
-                uploadGalleryPhoto
-            );
-
-        }
-
-
-        /* Image preview */
-
-        const galleryImage =
-            document.getElementById("gallery-image");
-
-        if (galleryImage) {
-
-            galleryImage.addEventListener(
-                "change",
-                previewGalleryImage
-            );
-
-        }
-
-
-        /* Load dashboard */
-
-        await loadDashboard();
-
-
-    } catch (error) {
-
-        console.error(
-            "ADMIN SETUP ERROR:",
-            error
-        );
-
+    if (!user) {
+        return;
     }
 
+    /* Logout */
+    const logoutBtn = document.getElementById("logout-btn");
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", adminLogout);
+    }
+
+
+    /* Service form */
+    const serviceForm = document.getElementById("service-form");
+
+    if (serviceForm) {
+        serviceForm.addEventListener("submit", addService);
+    }
+
+
+    /* Gallery form */
+    const galleryForm = document.getElementById("gallery-form");
+
+    if (galleryForm) {
+        galleryForm.addEventListener(
+            "submit",
+            uploadGalleryPhoto
+        );
+    }
+
+
+    /* Image preview */
+    const galleryImage = document.getElementById("gallery-image");
+
+    if (galleryImage) {
+        galleryImage.addEventListener(
+            "change",
+            previewGalleryImage
+        );
+    }
+
+
+    /* Load everything */
+    await loadDashboard();
 }
 
 
 /* =========================================================
-   CHECK ADMIN LOGIN
+   CHECK ADMIN
 ========================================================= */
 
 async function checkAdmin() {
 
-    try {
+    const { data, error } =
+        await supabaseClient.auth.getUser();
 
-        const {
-            data,
-            error
-        } =
-            await supabaseClient
-                .auth
-                .getUser();
+    if (error || !data.user) {
 
-
-        if (error) {
-
-            console.error(
-                "AUTH ERROR:",
-                error
-            );
-
-            window.location.href =
-                "admin-login.html";
-
-            return null;
-
-        }
-
-
-        if (!data.user) {
-
-            window.location.href =
-                "admin-login.html";
-
-            return null;
-
-        }
-
-
-        return data.user;
-
-
-    } catch (error) {
-
-        console.error(
-            "CHECK ADMIN ERROR:",
-            error
-        );
-
-        window.location.href =
-            "admin-login.html";
+        window.location.href = "admin-login.html";
 
         return null;
-
     }
 
+    return data.user;
 }
 
 
 /* =========================================================
-   LOAD DASHBOARD
+   DASHBOARD
 ========================================================= */
 
 async function loadDashboard() {
@@ -208,7 +97,6 @@ async function loadDashboard() {
         loadServices(),
         loadGallery()
     ]);
-
 }
 
 
@@ -219,15 +107,9 @@ async function loadDashboard() {
 async function loadBookings() {
 
     const table =
-        document.getElementById(
-            "bookings-table"
-        );
+        document.getElementById("bookings-table");
 
-
-    if (!table) {
-        return;
-    }
-
+    if (!table) return;
 
     table.innerHTML = `
         <tr>
@@ -237,185 +119,15 @@ async function loadBookings() {
         </tr>
     `;
 
+    const { data: bookings, error } =
+        await supabaseClient
+            .from("bookings")
+            .select("*")
+            .order("created_at", {
+                ascending: false
+            });
 
-    try {
-
-        const {
-            data: bookings,
-            error
-        } =
-            await supabaseClient
-                .from("bookings")
-                .select("*")
-                .order(
-                    "created_at",
-                    {
-                        ascending: false
-                    }
-                );
-
-
-        if (error) {
-
-            console.error(
-                "BOOKINGS ERROR:",
-                error
-            );
-
-            table.innerHTML = `
-                <tr>
-                    <td colspan="7">
-                        ❌ ${escapeHTML(error.message)}
-                    </td>
-                </tr>
-            `;
-
-            return;
-
-        }
-
-
-        updateBookingStats(
-            bookings || []
-        );
-
-
-        if (
-            !bookings ||
-            bookings.length === 0
-        ) {
-
-            table.innerHTML = `
-                <tr>
-                    <td colspan="7">
-                        No appointments yet.
-                    </td>
-                </tr>
-            `;
-
-            return;
-
-        }
-
-
-        table.innerHTML = "";
-
-
-        bookings.forEach(
-            booking => {
-
-                const row =
-                    document.createElement("tr");
-
-
-                const customer =
-                    booking.customer_name ||
-                    booking.name ||
-                    booking.full_name ||
-                    "Unknown";
-
-
-                const phone =
-                    booking.phone ||
-                    booking.contact ||
-                    booking.contact_number ||
-                    "-";
-
-
-                const service =
-                    booking.service ||
-                    booking.service_name ||
-                    "-";
-
-
-                const date =
-                    booking.date ||
-                    booking.booking_date ||
-                    "-";
-
-
-                const time =
-                    booking.time ||
-                    booking.booking_time ||
-                    "-";
-
-
-                const status =
-                    booking.status ||
-                    "pending";
-
-
-                row.innerHTML = `
-
-                    <td>
-                        ${escapeHTML(customer)}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(phone)}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(service)}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(date)}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(time)}
-                    </td>
-
-                    <td>
-                        <span class="status status-${escapeHTML(
-                            String(status).toLowerCase()
-                        )}">
-                            ${escapeHTML(status)}
-                        </span>
-                    </td>
-
-                    <td>
-
-                        <button
-                            class="small-btn"
-                            onclick="updateBookingStatus(
-                                '${escapeJS(booking.id)}',
-                                'confirmed'
-                            )">
-
-                            Confirm
-
-                        </button>
-
-                        <button
-                            class="small-btn cancel-btn"
-                            onclick="updateBookingStatus(
-                                '${escapeJS(booking.id)}',
-                                'cancelled'
-                            )">
-
-                            Cancel
-
-                        </button>
-
-                    </td>
-
-                `;
-
-
-                table.appendChild(row);
-
-            }
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "LOAD BOOKINGS ERROR:",
-            error
-        );
+    if (error) {
 
         table.innerHTML = `
             <tr>
@@ -425,87 +137,164 @@ async function loadBookings() {
             </tr>
         `;
 
+        return;
     }
 
+    updateBookingStats(bookings || []);
+
+    if (!bookings || bookings.length === 0) {
+
+        table.innerHTML = `
+            <tr>
+                <td colspan="7">
+                    No appointments yet.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    table.innerHTML = "";
+
+    bookings.forEach(booking => {
+
+        const row = document.createElement("tr");
+
+        const customer =
+            booking.customer_name ||
+            booking.name ||
+            booking.full_name ||
+            "Unknown";
+
+        const phone =
+            booking.phone ||
+            booking.contact ||
+            booking.contact_number ||
+            "-";
+
+        const service =
+            booking.service ||
+            booking.service_name ||
+            "-";
+
+        const date =
+            booking.date ||
+            booking.booking_date ||
+            "-";
+
+        const time =
+            booking.time ||
+            booking.booking_time ||
+            "-";
+
+        const status =
+            booking.status || "pending";
+
+
+        row.innerHTML = `
+
+            <td>${escapeHTML(customer)}</td>
+
+            <td>
+                <a href="https://wa.me/27${escapeHTML(
+                    cleanPhone(phone)
+                )}"
+                   target="_blank">
+                    ${escapeHTML(phone)}
+                </a>
+            </td>
+
+            <td>${escapeHTML(service)}</td>
+
+            <td>${escapeHTML(date)}</td>
+
+            <td>${escapeHTML(time)}</td>
+
+            <td>
+                <span class="status status-${escapeHTML(
+                    String(status).toLowerCase()
+                )}">
+                    ${escapeHTML(status)}
+                </span>
+            </td>
+
+            <td>
+
+                <button
+                    class="small-btn"
+                    onclick="updateBookingStatus(
+                        '${escapeJS(booking.id)}',
+                        'confirmed'
+                    )">
+                    Confirm
+                </button>
+
+                <button
+                    class="small-btn cancel-btn"
+                    onclick="updateBookingStatus(
+                        '${escapeJS(booking.id)}',
+                        'cancelled'
+                    )">
+                    Cancel
+                </button>
+
+            </td>
+        `;
+
+        table.appendChild(row);
+    });
 }
 
 
 /* =========================================================
-   BOOKING STATISTICS
+   BOOKING STATS
 ========================================================= */
 
 function updateBookingStats(bookings) {
 
     const total =
-        document.getElementById(
-            "total-bookings"
-        );
-
+        document.getElementById("total-bookings");
 
     const pending =
-        document.getElementById(
-            "pending-bookings"
-        );
-
+        document.getElementById("pending-bookings");
 
     const confirmed =
-        document.getElementById(
-            "confirmed-bookings"
-        );
-
-
-    const totalBookings =
-        bookings.length;
-
-
-    const pendingBookings =
-        bookings.filter(
-            booking =>
-                String(
-                    booking.status || "pending"
-                ).toLowerCase()
-                === "pending"
-        ).length;
-
-
-    const confirmedBookings =
-        bookings.filter(
-            booking =>
-                String(
-                    booking.status || ""
-                ).toLowerCase()
-                === "confirmed"
-        ).length;
+        document.getElementById("confirmed-bookings");
 
 
     if (total) {
-
-        total.innerText =
-            totalBookings;
-
+        total.innerText = bookings.length;
     }
 
 
     if (pending) {
 
         pending.innerText =
-            pendingBookings;
-
+            bookings.filter(
+                booking =>
+                    String(
+                        booking.status || "pending"
+                    ).toLowerCase() === "pending"
+            ).length;
     }
 
 
     if (confirmed) {
 
         confirmed.innerText =
-            confirmedBookings;
-
+            bookings.filter(
+                booking =>
+                    String(
+                        booking.status || ""
+                    ).toLowerCase() === "confirmed"
+            ).length;
     }
-
 }
 
 
 /* =========================================================
-   UPDATE BOOKING STATUS
+   UPDATE BOOKING
 ========================================================= */
 
 async function updateBookingStatus(
@@ -513,54 +302,27 @@ async function updateBookingStatus(
     status
 ) {
 
-    try {
-
-        const {
-            error
-        } =
-            await supabaseClient
-                .from("bookings")
-                .update({
-                    status: status
-                })
-                .eq(
-                    "id",
-                    bookingId
-                );
+    const { error } =
+        await supabaseClient
+            .from("bookings")
+            .update({
+                status: status
+            })
+            .eq("id", bookingId);
 
 
-        if (error) {
-
-            console.error(
-                error
-            );
-
-            alert(
-                "❌ Could not update booking: "
-                + error.message
-            );
-
-            return;
-
-        }
-
-
-        await loadBookings();
-
-
-    } catch (error) {
-
-        console.error(
-            error
-        );
+    if (error) {
 
         alert(
-            "❌ "
-            + error.message
+            "❌ Could not update booking:\n" +
+            error.message
         );
 
+        return;
     }
 
+
+    await loadBookings();
 }
 
 
@@ -571,181 +333,106 @@ async function updateBookingStatus(
 async function loadServices() {
 
     const container =
-        document.getElementById(
-            "admin-services"
-        );
+        document.getElementById("admin-services");
 
-
-    if (!container) {
-        return;
-    }
-
+    if (!container) return;
 
     container.innerHTML =
         "<p>Loading services...</p>";
 
 
-    try {
-
-        const {
-            data: services,
-            error
-        } =
-            await supabaseClient
-                .from("services")
-                .select("*")
-                .order(
-                    "created_at",
-                    {
-                        ascending: false
-                    }
-                );
+    const { data: services, error } =
+        await supabaseClient
+            .from("services")
+            .select("*")
+            .order("created_at", {
+                ascending: false
+            });
 
 
-        if (error) {
-
-            console.error(
-                "SERVICES ERROR:",
-                error
-            );
-
-            container.innerHTML =
-                `
-                <p>
-                    ❌ ${escapeHTML(
-                        error.message
-                    )}
-                </p>
-                `;
-
-            return;
-
-        }
-
-
-        const counter =
-            document.getElementById(
-                "total-services"
-            );
-
-
-        if (counter) {
-
-            counter.innerText =
-                services
-                    ? services.length
-                    : 0;
-
-        }
-
-
-        if (
-            !services ||
-            services.length === 0
-        ) {
-
-            container.innerHTML =
-                `
-                <p>
-                    No services added yet.
-                </p>
-                `;
-
-            return;
-
-        }
-
-
-        container.innerHTML = "";
-
-
-        services.forEach(
-            service => {
-
-                const item =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                item.className =
-                    "admin-item";
-
-
-                const name =
-                    service.name ||
-                    service.service_name ||
-                    "Service";
-
-
-                const price =
-                    service.price ||
-                    "0";
-
-
-                const duration =
-                    service.duration ||
-                    "-";
-
-
-                item.innerHTML = `
-
-                    <div>
-
-                        <h3>
-                            ${escapeHTML(name)}
-                        </h3>
-
-                        <p>
-                            R${escapeHTML(price)}
-                        </p>
-
-                        <small>
-                            ${escapeHTML(duration)}
-                        </small>
-
-                    </div>
-
-
-                    <button
-                        class="small-btn cancel-btn"
-                        onclick="deleteService(
-                            '${escapeJS(service.id)}'
-                        )">
-
-                        Delete
-
-                    </button>
-
-                `;
-
-
-                container.appendChild(
-                    item
-                );
-
-            }
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "LOAD SERVICES ERROR:",
-            error
-        );
+    if (error) {
 
         container.innerHTML =
-            `
-            <p>
-                ❌ ${escapeHTML(
-                    error.message
-                )}
-            </p>
-            `;
+            `<p>❌ ${escapeHTML(error.message)}</p>`;
 
+        return;
     }
 
+
+    const counter =
+        document.getElementById("total-services");
+
+    if (counter) {
+        counter.innerText =
+            services ? services.length : 0;
+    }
+
+
+    if (!services || services.length === 0) {
+
+        container.innerHTML =
+            "<p>No services added yet.</p>";
+
+        return;
+    }
+
+
+    container.innerHTML = "";
+
+
+    services.forEach(service => {
+
+        const item =
+            document.createElement("div");
+
+        item.className = "admin-item";
+
+
+        const name =
+            service.name ||
+            service.service_name ||
+            "Service";
+
+
+        const price =
+            service.price || "0";
+
+
+        const duration =
+            service.duration || "-";
+
+
+        item.innerHTML = `
+
+            <div>
+
+                <h3>
+                    ${escapeHTML(name)}
+                </h3>
+
+                <p>
+                    R${escapeHTML(price)}
+                </p>
+
+                <small>
+                    ${escapeHTML(duration)}
+                </small>
+
+            </div>
+
+            <button
+                class="small-btn cancel-btn"
+                onclick="deleteService(
+                    '${escapeJS(service.id)}'
+                )">
+                Delete
+            </button>
+
+        `;
+
+
+        container.appendChild(item);
+    });
 }
 
 
@@ -783,64 +470,36 @@ async function addService(event) {
         );
 
         return;
-
     }
 
 
-    try {
-
-        const {
-            error
-        } =
-            await supabaseClient
-                .from("services")
-                .insert({
-                    name: name,
-                    price: Number(price),
-                    duration: duration
-                });
+    const { error } =
+        await supabaseClient
+            .from("services")
+            .insert({
+                name: name,
+                price: Number(price),
+                duration: duration
+            });
 
 
-        if (error) {
-
-            console.error(
-                "ADD SERVICE ERROR:",
-                error
-            );
-
-            alert(
-                "❌ Could not add service: "
-                + error.message
-            );
-
-            return;
-
-        }
-
-
-        document
-            .getElementById(
-                "service-form"
-            )
-            .reset();
-
-
-        await loadServices();
-
-
-    } catch (error) {
-
-        console.error(
-            error
-        );
+    if (error) {
 
         alert(
-            "❌ "
-            + error.message
+            "❌ Could not add service:\n" +
+            error.message
         );
 
+        return;
     }
 
+
+    document
+        .getElementById("service-form")
+        .reset();
+
+
+    await loadServices();
 }
 
 
@@ -848,142 +507,85 @@ async function addService(event) {
    DELETE SERVICE
 ========================================================= */
 
-async function deleteService(
-    serviceId
-) {
+async function deleteService(serviceId) {
 
-    if (
-        !confirm(
-            "Delete this service?"
-        )
-    ) {
-
+    if (!confirm("Delete this service?")) {
         return;
-
     }
 
 
-    try {
-
-        const {
-            error
-        } =
-            await supabaseClient
-                .from("services")
-                .delete()
-                .eq(
-                    "id",
-                    serviceId
-                );
+    const { error } =
+        await supabaseClient
+            .from("services")
+            .delete()
+            .eq("id", serviceId);
 
 
-        if (error) {
-
-            alert(
-                "❌ Could not delete service: "
-                + error.message
-            );
-
-            return;
-
-        }
-
-
-        await loadServices();
-
-
-    } catch (error) {
-
-        console.error(
-            error
-        );
+    if (error) {
 
         alert(
-            "❌ "
-            + error.message
+            "❌ Could not delete service:\n" +
+            error.message
         );
 
+        return;
     }
 
+
+    await loadServices();
 }
 
 
 /* =========================================================
-   GALLERY IMAGE PREVIEW
+   IMAGE PREVIEW
 ========================================================= */
 
 function previewGalleryImage() {
 
     const input =
-        document.getElementById(
-            "gallery-image"
-        );
+        document.getElementById("gallery-image");
 
+    const preview =
+        document.getElementById("image-preview");
 
-    const previewContainer =
+    const container =
         document.getElementById(
             "image-preview-container"
         );
 
 
-    const preview =
-        document.getElementById(
-            "image-preview"
-        );
-
-
-    if (
-        !input ||
-        !previewContainer ||
-        !preview
-    ) {
-
+    if (!input || !preview || !container) {
         return;
-
     }
 
 
-    const file =
-        input.files[0];
+    const file = input.files[0];
 
 
     if (!file) {
 
-        previewContainer.style.display =
-            "none";
+        container.style.display = "none";
 
-        preview.src =
-            "";
+        preview.src = "";
 
         return;
-
     }
 
 
-    if (
-        !file.type.startsWith(
-            "image/"
-        )
-    ) {
+    if (!file.type.startsWith("image/")) {
 
-        alert(
-            "Please select an image file."
-        );
+        alert("Please choose an image.");
 
         input.value = "";
 
-        previewContainer.style.display =
-            "none";
+        container.style.display = "none";
 
         return;
-
     }
 
 
-    if (
-        file.size >
-        10 * 1024 * 1024
-    ) {
+    /* 10 MB limit */
+    if (file.size > 10 * 1024 * 1024) {
 
         alert(
             "Image must be smaller than 10 MB."
@@ -991,34 +593,26 @@ function previewGalleryImage() {
 
         input.value = "";
 
-        previewContainer.style.display =
-            "none";
+        container.style.display = "none";
 
         return;
-
     }
 
 
-    const reader =
-        new FileReader();
+    const reader = new FileReader();
 
 
-    reader.onload =
-        function(event) {
+    reader.onload = function(event) {
 
-            preview.src =
-                event.target.result;
+        preview.src =
+            event.target.result;
 
-            previewContainer.style.display =
-                "block";
-
-        };
+        container.style.display =
+            "block";
+    };
 
 
-    reader.readAsDataURL(
-        file
-    );
-
+    reader.readAsDataURL(file);
 }
 
 
@@ -1026,16 +620,9 @@ function previewGalleryImage() {
    UPLOAD GALLERY PHOTO
 ========================================================= */
 
-async function uploadGalleryPhoto(
-    event
-) {
+async function uploadGalleryPhoto(event) {
 
     event.preventDefault();
-
-
-    console.log(
-        "Gallery upload function started."
-    );
 
 
     const message =
@@ -1050,242 +637,143 @@ async function uploadGalleryPhoto(
         );
 
 
-    const fileInput =
+    const input =
         document.getElementById(
             "gallery-image"
         );
 
 
-    const titleInput =
-        document.getElementById(
-            "image-title"
-        );
-
-
-    if (!message || !fileInput) {
-
-        console.error(
-            "Gallery elements not found."
-        );
-
+    if (!input || !message) {
         return;
-
     }
 
 
-    const file =
-        fileInput.files[0];
+    const file = input.files[0];
 
 
-    const title =
-        titleInput
-            ? titleInput.value.trim()
-            : "Hairstyle";
+    /* No photo */
+    if (!file) {
+
+        message.innerText =
+            "❌ Please choose a photo.";
+
+        return;
+    }
 
 
-    message.innerText =
-        "Uploading photo...";
+    /* Image check */
+    if (!file.type.startsWith("image/")) {
+
+        message.innerText =
+            "❌ Please choose an image.";
+
+        return;
+    }
 
 
-    if (button) {
+    /* 10 MB maximum */
+    if (file.size > 10 * 1024 * 1024) {
 
-        button.disabled =
-            true;
+        message.innerText =
+            "❌ Image must be smaller than 10 MB.";
 
-        button.innerText =
-            "UPLOADING...";
-
+        return;
     }
 
 
     try {
 
-        /* =========================================
-           CHECK ADMIN
-        ========================================= */
-
-        const user =
-            await checkAdmin();
-
+        /* Check login */
+        const user = await checkAdmin();
 
         if (!user) {
-
             return;
-
         }
 
 
-        /* =========================================
-           CHECK FILE
-        ========================================= */
+        message.innerText =
+            "Uploading photo...";
 
-        if (!file) {
 
-            message.innerText =
-                "❌ Please choose a photo.";
+        if (button) {
 
-            return;
+            button.disabled = true;
 
+            button.innerText =
+                "UPLOADING...";
         }
 
 
-        /* =========================================
-           CHECK IMAGE
-        ========================================= */
+        /*
+           Create a simple unique filename
+        */
 
-        if (
-            !file.type.startsWith(
-                "image/"
-            )
-        ) {
-
-            message.innerText =
-                "❌ Please choose an image file.";
-
-            return;
-
-        }
-
-
-        /* =========================================
-           CHECK SIZE
-        ========================================= */
-
-        if (
-            file.size >
-            10 * 1024 * 1024
-        ) {
-
-            message.innerText =
-                "❌ Image must be smaller than 10 MB.";
-
-            return;
-
-        }
-
-
-        /* =========================================
-           CREATE FILE NAME
-        ========================================= */
-
-        const cleanName =
+        const extension =
             file.name
-                .replace(
-                    /[^a-zA-Z0-9._-]/g,
-                    "_"
-                );
-
-
-        const timestamp =
-            Date.now();
+                .split(".")
+                .pop()
+                .toLowerCase();
 
 
         const filePath =
-            timestamp
-            + "_"
-            + cleanName;
+            Date.now() +
+            "." +
+            extension;
 
 
         console.log(
-            "Uploading to gallery:",
+            "Uploading:",
             filePath
         );
 
 
-        /* =========================================
-           UPLOAD TO SUPABASE STORAGE
-        ========================================= */
+        /*
+           Upload directly to
+           Supabase Storage
+        */
 
-        const {
-            error: uploadError
-        } =
+        const { error } =
             await supabaseClient
                 .storage
-                .from(
-                    GALLERY_BUCKET
-                )
+                .from(GALLERY_BUCKET)
                 .upload(
                     filePath,
                     file,
                     {
-                        cacheControl:
-                            "3600",
-
-                        contentType:
-                            file.type,
-
-                        upsert:
-                            false
+                        contentType: file.type,
+                        cacheControl: "3600",
+                        upsert: false
                     }
                 );
 
 
-        if (uploadError) {
+        if (error) {
 
             console.error(
-                "GALLERY UPLOAD ERROR:",
-                uploadError
+                "UPLOAD ERROR:",
+                error
             );
 
             message.innerText =
-                "❌ Upload failed: "
-                + uploadError.message;
+                "❌ Upload failed: " +
+                error.message;
 
             return;
-
         }
 
 
-        /* =========================================
-           GET PUBLIC URL
-        ========================================= */
-
-        const {
-            data: publicData
-        } =
-            supabaseClient
-                .storage
-                .from(
-                    GALLERY_BUCKET
-                )
-                .getPublicUrl(
-                    filePath
-                );
-
-
-        const imageUrl =
-            publicData.publicUrl;
-
-
-        console.log(
-            "Gallery image URL:",
-            imageUrl
-        );
-
-
-        /* =========================================
+        /*
            SUCCESS
-        ========================================= */
+        */
 
         message.innerText =
             "✅ Photo uploaded successfully!";
 
 
-        /* RESET FORM */
-
+        /* Reset */
         document
-            .getElementById(
-                "gallery-form"
-            )
+            .getElementById("gallery-form")
             .reset();
-
-
-        /* HIDE PREVIEW */
-
-        const previewContainer =
-            document.getElementById(
-                "image-preview-container"
-            );
 
 
         const preview =
@@ -1294,24 +782,24 @@ async function uploadGalleryPhoto(
             );
 
 
-        if (previewContainer) {
-
-            previewContainer.style.display =
-                "none";
-
-        }
+        const previewContainer =
+            document.getElementById(
+                "image-preview-container"
+            );
 
 
         if (preview) {
-
-            preview.src =
-                "";
-
+            preview.src = "";
         }
 
 
-        /* RELOAD GALLERY */
+        if (previewContainer) {
+            previewContainer.style.display =
+                "none";
+        }
 
+
+        /* Reload gallery */
         await loadGallery();
 
 
@@ -1323,23 +811,19 @@ async function uploadGalleryPhoto(
         );
 
         message.innerText =
-            "❌ "
-            + error.message;
+            "❌ Upload failed: " +
+            error.message;
 
     } finally {
 
         if (button) {
 
-            button.disabled =
-                false;
+            button.disabled = false;
 
             button.innerText =
                 "UPLOAD PHOTO";
-
         }
-
     }
-
 }
 
 
@@ -1356,288 +840,154 @@ async function loadGallery() {
 
 
     if (!gallery) {
-
         return;
-
     }
 
 
     gallery.innerHTML =
-        `
-        <p>
-            Loading photos...
-        </p>
+        "<p>Loading photos...</p>";
+
+
+    const { data: files, error } =
+        await supabaseClient
+            .storage
+            .from(GALLERY_BUCKET)
+            .list("", {
+                limit: 100,
+                sortBy: {
+                    column: "created_at",
+                    order: "desc"
+                }
+            });
+
+
+    if (error) {
+
+        gallery.innerHTML =
+            `<p>❌ ${escapeHTML(
+                error.message
+            )}</p>`;
+
+        return;
+    }
+
+
+    if (!files || files.length === 0) {
+
+        gallery.innerHTML =
+            "<p>No photos uploaded yet.</p>";
+
+        return;
+    }
+
+
+    gallery.innerHTML = "";
+
+
+    files.forEach(file => {
+
+        if (!file.name) {
+            return;
+        }
+
+
+        const { data } =
+            supabaseClient
+                .storage
+                .from(GALLERY_BUCKET)
+                .getPublicUrl(file.name);
+
+
+        const imageUrl =
+            data.publicUrl;
+
+
+        const item =
+            document.createElement("div");
+
+
+        item.className =
+            "admin-gallery-item";
+
+
+        item.innerHTML = `
+
+            <img
+                src="${escapeHTML(imageUrl)}"
+                alt="Sylvia hairstyle"
+            >
+
+            <div class="gallery-item-info">
+
+                <strong>
+                    ${escapeHTML(file.name)}
+                </strong>
+
+                <button
+                    type="button"
+                    class="small-btn cancel-btn"
+                >
+                    DELETE PHOTO
+                </button>
+
+            </div>
+
         `;
 
 
-    try {
-
-        const {
-            data: files,
-            error
-        } =
-            await supabaseClient
-                .storage
-                .from(
-                    GALLERY_BUCKET
-                )
-                .list(
-                    "",
-                    {
-                        limit: 100,
-                        sortBy: {
-                            column:
-                                "created_at",
-                            order:
-                                "desc"
-                        }
-                    }
-                );
+        const deleteButton =
+            item.querySelector("button");
 
 
-        if (error) {
-
-            console.error(
-                "LOAD GALLERY ERROR:",
-                error
-            );
-
-            gallery.innerHTML =
-                `
-                <p>
-                    ❌ ${escapeHTML(
-                        error.message
-                    )}
-                </p>
-                `;
-
-            return;
-
-        }
-
-
-        if (
-            !files ||
-            files.length === 0
-        ) {
-
-            gallery.innerHTML =
-                `
-                <p>
-                    No photos uploaded yet.
-                </p>
-                `;
-
-            return;
-
-        }
-
-
-        gallery.innerHTML =
-            "";
-
-
-        files.forEach(
-            file => {
-
-                /*
-                   Ignore folders if Supabase
-                   returns any.
-                */
-
-                if (
-                    !file.name ||
-                    file.name.endsWith("/")
-                ) {
-
-                    return;
-
-                }
-
-
-                const {
-                    data
-                } =
-                    supabaseClient
-                        .storage
-                        .from(
-                            GALLERY_BUCKET
-                        )
-                        .getPublicUrl(
-                            file.name
-                        );
-
-
-                const imageUrl =
-                    data.publicUrl;
-
-
-                const item =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                item.className =
-                    "admin-gallery-item";
-
-
-                item.innerHTML = `
-
-                    <img
-                        src="${escapeHTML(
-                            imageUrl
-                        )}"
-                        alt="Sylvia hairstyle">
-
-                    <div
-                        class="gallery-item-info">
-
-                        <strong>
-                            ${escapeHTML(
-                                removeTimestamp(
-                                    file.name
-                                )
-                            )}
-                        </strong>
-
-                        <button
-                            type="button"
-                            class="small-btn cancel-btn"
-                            data-file="${escapeHTML(
-                                file.name
-                            )}">
-
-                            DELETE PHOTO
-
-                        </button>
-
-                    </div>
-
-                `;
-
-
-                const deleteButton =
-                    item.querySelector(
-                        "button"
-                    );
-
-
-                deleteButton.addEventListener(
-                    "click",
-                    function() {
-
-                        deleteGalleryPhoto(
-                            file.name
-                        );
-
-                    }
-                );
-
-
-                gallery.appendChild(
-                    item
-                );
-
+        deleteButton.addEventListener(
+            "click",
+            () => {
+                deleteGalleryPhoto(file.name);
             }
         );
 
 
-    } catch (error) {
-
-        console.error(
-            "GALLERY LOAD ERROR:",
-            error
-        );
-
-        gallery.innerHTML =
-            `
-            <p>
-                ❌ ${escapeHTML(
-                    error.message
-                )}
-            </p>
-            `;
-
-    }
-
+        gallery.appendChild(item);
+    });
 }
 
 
 /* =========================================================
-   DELETE GALLERY PHOTO
+   DELETE PHOTO
 ========================================================= */
 
-async function deleteGalleryPhoto(
-    fileName
-) {
+async function deleteGalleryPhoto(fileName) {
 
-    const confirmed =
-        confirm(
+    if (
+        !confirm(
             "Are you sure you want to delete this photo?"
+        )
+    ) {
+        return;
+    }
+
+
+    const { error } =
+        await supabaseClient
+            .storage
+            .from(GALLERY_BUCKET)
+            .remove([fileName]);
+
+
+    if (error) {
+
+        alert(
+            "❌ Delete failed:\n" +
+            error.message
         );
-
-
-    if (!confirmed) {
 
         return;
-
     }
 
 
-    try {
+    alert("✅ Photo deleted.");
 
-        const {
-            error
-        } =
-            await supabaseClient
-                .storage
-                .from(
-                    GALLERY_BUCKET
-                )
-                .remove([
-                    fileName
-                ]);
-
-
-        if (error) {
-
-            console.error(
-                "DELETE PHOTO ERROR:",
-                error
-            );
-
-            alert(
-                "❌ Delete failed: "
-                + error.message
-            );
-
-            return;
-
-        }
-
-
-        alert(
-            "✅ Photo deleted."
-        );
-
-
-        await loadGallery();
-
-
-    } catch (error) {
-
-        console.error(
-            error
-        );
-
-        alert(
-            "❌ "
-            + error.message
-        );
-
-    }
-
+    await loadGallery();
 }
 
 
@@ -1647,134 +997,47 @@ async function deleteGalleryPhoto(
 
 async function adminLogout() {
 
-    try {
+    await supabaseClient.auth.signOut();
 
-        const {
-            error
-        } =
-            await supabaseClient
-                .auth
-                .signOut();
-
-
-        if (error) {
-
-            console.error(
-                error
-            );
-
-        }
-
-
-        window.location.href =
-            "admin-login.html";
-
-
-    } catch (error) {
-
-        console.error(
-            error
-        );
-
-        window.location.href =
-            "admin-login.html";
-
-    }
-
+    window.location.href =
+        "admin-login.html";
 }
 
 
 /* =========================================================
-   REMOVE TIMESTAMP FROM DISPLAY NAME
+   PHONE NUMBER
 ========================================================= */
 
-function removeTimestamp(
-    fileName
-) {
+function cleanPhone(phone) {
 
-    return fileName.replace(
-        /^\d+_/,
-        ""
-    );
-
+    return String(phone)
+        .replace(/\D/g, "")
+        .replace(/^27/, "")
+        .replace(/^0/, "");
 }
 
 
 /* =========================================================
-   ESCAPE HTML
+   SECURITY
 ========================================================= */
 
-function escapeHTML(
-    value
-) {
+function escapeHTML(value) {
 
-    return String(
-        value ?? ""
-    )
-
-    .replace(
-        /&/g,
-        "&amp;"
-    )
-
-    .replace(
-        /</g,
-        "&lt;"
-    )
-
-    .replace(
-        />/g,
-        "&gt;"
-    )
-
-    .replace(
-        /"/g,
-        "&quot;"
-    )
-
-    .replace(
-        /'/g,
-        "&#039;"
-    );
-
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 
-/* =========================================================
-   ESCAPE JAVASCRIPT
-========================================================= */
+function escapeJS(value) {
 
-function escapeJS(
-    value
-) {
-
-    return String(
-        value ?? ""
-    )
-
-    .replace(
-        /\\/g,
-        "\\\\"
-    )
-
-    .replace(
-        /'/g,
-        "\\'"
-    )
-
-    .replace(
-        /"/g,
-        '\\"'
-    )
-
-    .replace(
-        /\n/g,
-        "\\n"
-    )
-
-    .replace(
-        /\r/g,
-        "\\r"
-    );
-
+    return String(value ?? "")
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, "\\n")
+        .replace(/\r/g, "\\r");
 }
