@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Book Appointment | Sylvia The Hairdresser
+    </title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+
+<body>
+
+
+<!-- ==========================================
+     NAVIGATION
+=========================================== -->
+
+<header class="navbar">
+
+    <div class="logo">
+
+        <span>SYLVIA</span>
+
+        <small>
+            THE HAIRDRESSER
+        </small>
+
+    </div>
+
+
+    <nav>
+
+        <a href="index.html">
+            Home
+        </a>
+
+        <a href="index.html#services">
+            Services
+        </a>
+
+        <a href="index.html#gallery">
+            Gallery
+        </a>
+
+        <a href="booking.html">
+            Book Now
+        </a>
+
+    </nav>
+
+</header>
+
+
+
+<!-- ==========================================
+     PAGE HEADER
+=========================================== -->
+
+<section class="page-header">
+
+    <h1>
+        Book Appointment
+    </h1>
+
+    <p>
+        Choose your service and preferred appointment time.
+    </p>
+
+</section>
+
+
+
+<!-- ==========================================
+     BOOKING FORM
+=========================================== -->
+
+<section class="booking-section">
+
+    <div class="booking-box">
+
+        <h2>
+            Appointment Details
+        </h2>
+
+
+        <form id="booking-form">
+
+
+            <!-- NAME + PHONE -->
+
+            <div class="form-row">
+
+
+                <div class="form-group">
+
+                    <label for="name">
+                        Full Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="name"
+                        required
+                        placeholder="Enter your full name">
+
+                </div>
+
+
+
+                <div class="form-group">
+
+                    <label for="phone">
+                        Phone Number
+                    </label>
+
+                    <input
+                        type="tel"
+                        id="phone"
+                        required
+                        placeholder="Enter your phone number">
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- EMAIL -->
+
+            <div class="form-group">
+
+                <label for="email">
+                    Email Address
+                </label>
+
+                <input
+                    type="email"
+                    id="email"
+                    placeholder="Enter your email">
+
+            </div>
+
+
+
+            <!-- SERVICE -->
+
+            <div class="form-group">
+
+                <label for="service">
+                    Select Service
+                </label>
+
+                <select
+                    id="service"
+                    required>
+
+                    <option value="">
+                        Loading services...
+                    </option>
+
+                </select>
+
+            </div>
+
+
+
+            <!-- DATE + TIME -->
+
+            <div class="form-row">
+
+
+                <div class="form-group">
+
+                    <label for="date">
+                        Appointment Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="date"
+                        required>
+
+                </div>
+
+
+
+                <div class="form-group">
+
+                    <label for="time">
+                        Appointment Time
+                    </label>
+
+                    <input
+                        type="time"
+                        id="time"
+                        required>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- MESSAGE -->
+
+            <div class="form-group">
+
+                <label for="message">
+                    Additional Message
+                </label>
+
+                <textarea
+                    id="message"
+                    rows="5"
+                    placeholder="Anything Sylvia should know?"></textarea>
+
+            </div>
+
+
+
+            <!-- SUBMIT -->
+
+            <button
+                type="submit"
+                class="btn full-btn">
+
+                CONFIRM BOOKING
+
+            </button>
+
+
+
+            <!-- BOOKING MESSAGE -->
+
+            <div
+                id="booking-message">
+
+            </div>
+
+
+        </form>
+
+
+    </div>
+
+</section>
+
+
+
+<!-- ==========================================
+     WHATSAPP BUTTON
+=========================================== -->
+
+<a
+    href="https://wa.me/27767966650"
+    class="whatsapp-button"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Contact Sylvia on WhatsApp">
+
+    <span>💬</span>
+
+    WhatsApp Sylvia
+
+</a>
+
+
+
+<!-- ==========================================
+     FOOTER
+=========================================== -->
+
+<footer>
+
+    <div class="footer-logo">
+        SYLVIA THE HAIRDRESSER
+    </div>
+
+    <p>
+        © 2026 Sylvia The Hairdresser.
+    </p>
+
+</footer>
+
+
+
+<!-- ==========================================
+     SUPABASE
+=========================================== -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+</script>
+
+
+<script src="supabase.js"></script>
+
+<script src="booking.js"></script>
+
+
+</body>
+
+</html>

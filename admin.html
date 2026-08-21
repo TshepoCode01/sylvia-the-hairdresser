@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Admin Dashboard | Sylvia The Hairdresser
+    </title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+
+<body class="admin-body">
+
+
+    <!-- ==========================================
+         ADMIN HEADER
+    =========================================== -->
+
+    <header class="admin-header">
+
+        <div class="admin-brand">
+
+            <h2>
+                SYLVIA THE HAIRDRESSER
+            </h2>
+
+            <span>
+                Admin Dashboard
+            </span>
+
+        </div>
+
+
+        <button
+            id="logout-btn"
+            class="logout-btn">
+
+            Logout
+
+        </button>
+
+    </header>
+
+
+
+    <!-- ==========================================
+         MAIN
+    =========================================== -->
+
+    <main class="admin-container">
+
+
+        <!-- WELCOME -->
+
+        <section class="dashboard-welcome">
+
+            <h1>
+                Dashboard
+            </h1>
+
+            <p>
+                Manage Sylvia The Hairdresser website,
+                appointments, services and gallery.
+            </p>
+
+        </section>
+
+
+
+        <!-- ==========================================
+             STATISTICS
+        =========================================== -->
+
+        <section class="stats">
+
+
+            <div class="stat-card">
+
+                <span>
+                    Total Bookings
+                </span>
+
+                <strong id="total-bookings">
+                    0
+                </strong>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <span>
+                    Pending Bookings
+                </span>
+
+                <strong id="pending-bookings">
+                    0
+                </strong>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <span>
+                    Confirmed Bookings
+                </span>
+
+                <strong id="confirmed-bookings">
+                    0
+                </strong>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <span>
+                    Services
+                </span>
+
+                <strong id="total-services">
+                    0
+                </strong>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- ==========================================
+             APPOINTMENTS
+        =========================================== -->
+
+        <section class="admin-section">
+
+
+            <div class="admin-section-header">
+
+                <div>
+
+                    <h2>
+                        Appointments
+                    </h2>
+
+                    <p>
+                        View and manage customer appointments.
+                    </p>
+
+                </div>
+
+
+                <button
+                    onclick="loadBookings()"
+                    class="small-btn">
+
+                    Refresh
+
+                </button>
+
+            </div>
+
+
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Customer
+                            </th>
+
+                            <th>
+                                Phone
+                            </th>
+
+                            <th>
+                                Service
+                            </th>
+
+                            <th>
+                                Date
+                            </th>
+
+                            <th>
+                                Time
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="bookings-table">
+
+                        <tr>
+
+                            <td colspan="7">
+
+                                Loading appointments...
+
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ==========================================
+             SERVICES
+        =========================================== -->
+
+        <section class="admin-section">
+
+
+            <div class="admin-section-header">
+
+                <div>
+
+                    <h2>
+                        Services
+                    </h2>
+
+                    <p>
+                        Add and remove hairdressing services.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- ADD SERVICE -->
+
+            <form
+                id="service-form"
+                class="admin-form">
+
+
+                <div class="form-group">
+
+                    <label for="service-name">
+                        Service Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="service-name"
+                        placeholder="Example: Box Braids"
+                        required>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="service-price">
+                        Price
+                    </label>
+
+                    <input
+                        type="number"
+                        id="service-price"
+                        placeholder="Example: 350"
+                        min="0"
+                        required>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="service-duration">
+                        Duration
+                    </label>
+
+                    <input
+                        type="text"
+                        id="service-duration"
+                        placeholder="Example: 3 hours"
+                        required>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="small-btn">
+
+                    ADD SERVICE
+
+                </button>
+
+            </form>
+
+
+
+            <!-- SERVICES -->
+
+            <div
+                id="admin-services"
+                class="admin-items">
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- ==========================================
+             GALLERY UPLOAD
+        =========================================== -->
+
+        <section class="admin-section">
+
+
+            <div class="admin-section-header">
+
+                <div>
+
+                    <h2>
+                        Hairstyle Gallery
+                    </h2>
+
+                    <p>
+                        Upload hairstyle photos from your
+                        phone or computer.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- UPLOAD FORM -->
+
+            <form
+                id="gallery-form"
+                class="upload-form">
+
+
+                <!-- FILE -->
+
+                <div class="form-group">
+
+                    <label for="gallery-image">
+                        Choose Hairstyle Photo
+                    </label>
+
+                    <input
+                        type="file"
+                        id="gallery-image"
+                        accept="image/*"
+                        required>
+
+                    <small>
+                        JPG, PNG, WEBP and other image formats.
+                        Maximum 10 MB.
+                    </small>
+
+                </div>
+
+
+
+                <!-- TITLE -->
+
+                <div class="form-group">
+
+                    <label for="image-title">
+                        Photo Title
+                    </label>
+
+                    <input
+                        type="text"
+                        id="image-title"
+                        placeholder="Example: Box Braids"
+                        required>
+
+                </div>
+
+
+
+                <!-- PREVIEW -->
+
+                <div
+                    id="image-preview-container"
+                    class="image-preview-container"
+                    style="display:none;">
+
+
+                    <h3>
+                        Preview
+                    </h3>
+
+
+                    <img
+                        id="image-preview"
+                        src=""
+                        alt="Selected hairstyle preview">
+
+
+                </div>
+
+
+
+                <!-- BUTTON -->
+
+                <button
+                    type="submit"
+                    id="upload-gallery-btn"
+                    class="small-btn">
+
+                    UPLOAD PHOTO
+
+                </button>
+
+
+
+                <!-- MESSAGE -->
+
+                <p
+                    id="gallery-message"
+                    class="gallery-message">
+
+                </p>
+
+
+            </form>
+
+
+
+            <!-- UPLOADED GALLERY -->
+
+            <div class="gallery-heading">
+
+                <h3>
+                    Uploaded Photos
+                </h3>
+
+            </div>
+
+
+            <div
+                id="admin-gallery"
+                class="admin-gallery">
+
+            </div>
+
+
+        </section>
+
+
+    </main>
+
+
+
+    <!-- ==========================================
+         SUPABASE
+    =========================================== -->
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+    </script>
+
+
+    <script src="supabase.js"></script>
+
+    <script src="admin.js"></script>
+
+
+</body>
+
+</html>
